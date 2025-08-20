@@ -17,13 +17,8 @@ builder.ConfigureServices((context, services) =>
     context.Configuration.GetSection(TinyphoneSettings.SectionName).Bind(tinyphoneSettings);
     services.AddSingleton(tinyphoneSettings);
 
-    // Configure HttpClient
-    services.AddHttpClient<ITinyphoneService, TinyphoneService>(client =>
-    {
-        client.BaseAddress = new Uri(tinyphoneSettings.BaseUrl);
-        client.Timeout = TimeSpan.FromSeconds(tinyphoneSettings.TimeoutSeconds);
-        client.DefaultRequestHeaders.Add("User-Agent", "TinyphoneCSharpClient/1.0");
-    });
+    // Configure HttpClientFactory
+    services.AddHttpClient();
 
     // Register services
     services.AddScoped<ITinyphoneService, TinyphoneService>();
@@ -38,6 +33,11 @@ var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 var tinyphoneService = scope.ServiceProvider.GetRequiredService<ITinyphoneService>();
 
 logger.LogInformation("Tinyphone C# Client started");
+
+// Log configuration for debugging
+var settings = scope.ServiceProvider.GetRequiredService<TinyphoneSettings>();
+logger.LogInformation("Using Base URL: {BaseUrl}", settings.BaseUrl);
+logger.LogInformation("Timeout: {TimeoutSeconds} seconds", settings.TimeoutSeconds);
 
 // Create cancellation token source with timeout and console cancellation
 using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));

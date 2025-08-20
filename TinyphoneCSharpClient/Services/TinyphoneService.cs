@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using TinyphoneCSharpClient.Configuration;
 using TinyphoneCSharpClient.Models;
 
 namespace TinyphoneCSharpClient.Services;
@@ -9,12 +10,14 @@ namespace TinyphoneCSharpClient.Services;
 /// </summary>
 public class TinyphoneService : ITinyphoneService
 {
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly TinyphoneSettings _settings;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public TinyphoneService(HttpClient httpClient)
+    public TinyphoneService(IHttpClientFactory httpClientFactory, TinyphoneSettings settings)
     {
-        _httpClient = httpClient;
+        _httpClientFactory = httpClientFactory;
+        _settings = settings;
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -22,11 +25,21 @@ public class TinyphoneService : ITinyphoneService
         };
     }
 
+    private HttpClient CreateHttpClient()
+    {
+        var client = _httpClientFactory.CreateClient();
+        client.BaseAddress = new Uri(_settings.BaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(_settings.TimeoutSeconds);
+        client.DefaultRequestHeaders.Add("User-Agent", "TinyphoneCSharpClient/1.0");
+        return client;
+    }
+
     public async Task<AppVersionResponse?> GetVersionAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            var response = await _httpClient.GetAsync("/", cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.GetAsync("/", cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -46,10 +59,11 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
+            using var httpClient = CreateHttpClient();
             var json = JsonSerializer.Serialize(loginRequest, _jsonOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             
-            var response = await _httpClient.PostAsync("/login", content, cancellationToken);
+            var response = await httpClient.PostAsync("/login", content, cancellationToken);
             var responseContent = await response.Content.ReadAsStringAsync();
             
             if (response.IsSuccessStatusCode)
@@ -69,7 +83,8 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
-            var response = await _httpClient.PostAsync("/logout", null, cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.PostAsync("/logout", null, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -89,7 +104,8 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
-            var response = await _httpClient.GetAsync("/accounts", cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.GetAsync("/accounts", cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -109,7 +125,8 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
-            var response = await _httpClient.GetAsync($"/accounts/{accountName}/logout", cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.GetAsync($"/accounts/{accountName}/logout", cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -129,10 +146,11 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
+            using var httpClient = CreateHttpClient();
             var json = JsonSerializer.Serialize(dialRequest, _jsonOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             
-            var response = await _httpClient.PostAsync("/dial", content, cancellationToken);
+            var response = await httpClient.PostAsync("/dial", content, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -152,7 +170,8 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
-            var response = await _httpClient.GetAsync("/calls", cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.GetAsync("/calls", cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -172,7 +191,8 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
-            var response = await _httpClient.PostAsync($"/calls/{callId}/answer", null, cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.PostAsync($"/calls/{callId}/answer", null, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -192,7 +212,8 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
-            var response = await _httpClient.PostAsync($"/calls/{callId}/dtmf/{digits}", null, cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.PostAsync($"/calls/{callId}/dtmf/{digits}", null, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -212,7 +233,8 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
-            var response = await _httpClient.PutAsync($"/calls/{callId}/hold", null, cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.PutAsync($"/calls/{callId}/hold", null, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -232,7 +254,8 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
-            var response = await _httpClient.DeleteAsync($"/calls/{callId}/hold", cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.DeleteAsync($"/calls/{callId}/hold", cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -252,7 +275,8 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
-            var response = await _httpClient.PutAsync($"/calls/{callId}/conference", null, cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.PutAsync($"/calls/{callId}/conference", null, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -272,7 +296,8 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
-            var response = await _httpClient.DeleteAsync($"/calls/{callId}/conference", cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.DeleteAsync($"/calls/{callId}/conference", cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -292,10 +317,11 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
+            using var httpClient = CreateHttpClient();
             var json = JsonSerializer.Serialize(transferRequest, _jsonOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             
-            var response = await _httpClient.PostAsync($"/calls/{callId}/transfer", content, cancellationToken);
+            var response = await httpClient.PostAsync($"/calls/{callId}/transfer", content, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -315,7 +341,8 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
-            var response = await _httpClient.PostAsync($"/calls/{callId}/attended-transfer/{destCallId}", null, cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.PostAsync($"/calls/{callId}/attended-transfer/{destCallId}", null, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -335,7 +362,8 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
-            var response = await _httpClient.PostAsync($"/calls/{callId}/hangup", null, cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.PostAsync($"/calls/{callId}/hangup", null, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -355,7 +383,8 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
-            var response = await _httpClient.PostAsync("/hangup_all", null, cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.PostAsync("/hangup_all", null, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -375,7 +404,8 @@ public class TinyphoneService : ITinyphoneService
     {
         try
         {
-            var response = await _httpClient.PostAsync("/exit", null, cancellationToken);
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.PostAsync("/exit", null, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
