@@ -190,32 +190,6 @@ static async Task DemonstrateApiCalls(ITinyphoneService service, ILogger logger,
         var dialResult = await service.DialAsync(dialRequest, cancellationToken);
         logger.LogInformation("Dial result: Success={Success}, Message={Message}", 
             dialResult.Success, dialResult.Message);
-
-        // 8. Show example usage patterns
-        logger.LogInformation("\n=== Example Usage Patterns ===");
-        logger.LogInformation("The following shows how you would use this client in a real application:");
-        logger.LogInformation("");
-        logger.LogInformation("// Real login example:");
-        logger.LogInformation("var realLoginRequest = new LoginRequest");
-        logger.LogInformation("{{");
-        logger.LogInformation("    Username = \"your-sip-username\",");
-        logger.LogInformation("    Password = \"your-sip-password\",");
-        logger.LogInformation("    Domain = \"your-sip-provider.com\",");
-        logger.LogInformation("    Proxy = \"optional-proxy-server\"  // Optional");
-        logger.LogInformation("}};");
-        logger.LogInformation("");
-        logger.LogInformation("// Call operations on an active call:");
-        logger.LogInformation("// await service.AnswerCallAsync(callId);");
-        logger.LogInformation("// await service.HoldCallAsync(callId);");
-        logger.LogInformation("// await service.UnholdCallAsync(callId);");
-        logger.LogInformation("// await service.SendDtmfAsync(callId, \"123\");");
-        logger.LogInformation("// await service.HangupCallAsync(callId);");
-        logger.LogInformation("");
-        logger.LogInformation("// Transfer operations:");
-        logger.LogInformation("// var transferRequest = new TransferRequest {{ Uri = \"sip:1234@domain.com\" }};");
-        logger.LogInformation("// await service.TransferCallAsync(callId, transferRequest);");
-        logger.LogInformation("// await service.AttendedTransferAsync(sourceCallId, destCallId);
-
     }
     catch (HttpRequestException ex)
     {
