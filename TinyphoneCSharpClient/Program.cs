@@ -94,9 +94,13 @@ static async Task DemonstrateApiCalls(ITinyphoneService service, ILogger logger,
         var accounts = await service.GetAccountsAsync(cancellationToken);
         if (accounts != null && accounts.Any())
         {
+            logger.LogInformation("Found {Count} accounts:", accounts.Count);
             foreach (var account in accounts)
             {
-                logger.LogInformation("Account: {AccountName} - {Username}@{Domain} [{Status}]", account.AccountName, account.Username, account.Domain, account.Status);
+                logger.LogInformation("  - ID: {Id}, Name: {Name}, URI: {Uri}", 
+                    account.Id, account.Name, account.Uri);
+                logger.LogInformation("    Active: {Active}, Status: {Status}", 
+                    account.Active, account.Status);
             }
         }
         else
@@ -109,9 +113,15 @@ static async Task DemonstrateApiCalls(ITinyphoneService service, ILogger logger,
         var calls = await service.GetCallsAsync(cancellationToken);
         if (calls != null && calls.Any())
         {
+            logger.LogInformation("Found {Count} active calls:", calls.Count);
             foreach (var call in calls)
             {
-                logger.LogInformation("Call: {CallId} - {RemoteUri} [{State}] ({Duration}s)", call.CallId, call.RemoteUri, call.State, call.Duration);
+                logger.LogInformation("  - ID: {Id}, Party: {Party}, State: {State}", 
+                    call.Id, call.Party, call.State);
+                logger.LogInformation("    Direction: {Direction}, Duration: {Duration}s, Hold: {Hold}", 
+                    call.Direction, call.Duration, call.Hold);
+                logger.LogInformation("    Caller ID: {CallerId}, Display Name: {DisplayName}", 
+                    call.CallerId, call.DisplayName);
             }
         }
         else
@@ -119,8 +129,44 @@ static async Task DemonstrateApiCalls(ITinyphoneService service, ILogger logger,
             logger.LogInformation("No active calls currently");
         }
 
-        // 4. Demonstrate login (using sample data)
-        logger.LogInformation("\n=== Demonstrate Login ===");
+        // 4. Get configuration
+        logger.LogInformation("\n=== Get Configuration ===");
+        var config = await service.GetConfigAsync(cancellationToken);
+        if (config != null)
+        {
+            logger.LogInformation("Configuration - Version: {Version}", config.Version);
+            logger.LogInformation("SIP Log File: {SipLogFile}", config.SipLogFile);
+            logger.LogInformation("HTTP Log File: {HttpLogFile}", config.HttpLogFile);
+        }
+        else
+        {
+            logger.LogWarning("Unable to get configuration information");
+        }
+
+        // 5. Get audio devices
+        logger.LogInformation("\n=== Get Audio Devices ===");
+        var devices = await service.GetDevicesAsync(cancellationToken);
+        if (devices != null && devices.Devices.Any())
+        {
+            logger.LogInformation("Found {Count} audio devices:", devices.Count);
+            foreach (var device in devices.Devices)
+            {
+                logger.LogInformation("  - ID: {Id}, Name: {Name}, Driver: {Driver}", 
+                    device.Id, device.Name, device.Driver);
+                logger.LogInformation("    Input: {InputCount}, Output: {OutputCount}", 
+                    device.InputCount, device.OutputCount);
+                if (!string.IsNullOrEmpty(device.PaApi))
+                    logger.LogInformation("    PA API: {PaApi}", device.PaApi);
+            }
+        }
+        else
+        {
+            logger.LogInformation("No audio devices found or unable to retrieve devices");
+        }
+
+        // 6. Demonstrate login (using sample data - will likely fail)
+        logger.LogInformation("\n=== Demonstrate Login (Sample Data) ===");
+        logger.LogInformation("Note: This will likely fail as it uses sample credentials");
         var loginRequest = new LoginRequest
         {
             Username = "testuser",
@@ -129,10 +175,12 @@ static async Task DemonstrateApiCalls(ITinyphoneService service, ILogger logger,
         };
 
         var loginResult = await service.LoginAsync(loginRequest, cancellationToken);
-        logger.LogInformation("Login result: {Message}", loginResult.Message);
+        logger.LogInformation("Login result: Success={Success}, Message={Message}", 
+            loginResult.Success, loginResult.Message);
 
-        // 5. Demonstrate dialing (using sample data)
-        logger.LogInformation("\n=== Demonstrate Dialing ===");
+        // 7. Demonstrate dialing (using sample data - will likely fail)
+        logger.LogInformation("\n=== Demonstrate Dialing (Sample Data) ===");
+        logger.LogInformation("Note: This will likely fail as no valid account is logged in");
         var dialRequest = new DialRequest
         {
             Uri = "sip:test@example.com",
@@ -140,7 +188,33 @@ static async Task DemonstrateApiCalls(ITinyphoneService service, ILogger logger,
         };
 
         var dialResult = await service.DialAsync(dialRequest, cancellationToken);
-        logger.LogInformation("Dial result: {Message}", dialResult.Message);
+        logger.LogInformation("Dial result: Success={Success}, Message={Message}", 
+            dialResult.Success, dialResult.Message);
+
+        // 8. Show example usage patterns
+        logger.LogInformation("\n=== Example Usage Patterns ===");
+        logger.LogInformation("The following shows how you would use this client in a real application:");
+        logger.LogInformation("");
+        logger.LogInformation("// Real login example:");
+        logger.LogInformation("var realLoginRequest = new LoginRequest");
+        logger.LogInformation("{{");
+        logger.LogInformation("    Username = \"your-sip-username\",");
+        logger.LogInformation("    Password = \"your-sip-password\",");
+        logger.LogInformation("    Domain = \"your-sip-provider.com\",");
+        logger.LogInformation("    Proxy = \"optional-proxy-server\"  // Optional");
+        logger.LogInformation("}};");
+        logger.LogInformation("");
+        logger.LogInformation("// Call operations on an active call:");
+        logger.LogInformation("// await service.AnswerCallAsync(callId);");
+        logger.LogInformation("// await service.HoldCallAsync(callId);");
+        logger.LogInformation("// await service.UnholdCallAsync(callId);");
+        logger.LogInformation("// await service.SendDtmfAsync(callId, \"123\");");
+        logger.LogInformation("// await service.HangupCallAsync(callId);");
+        logger.LogInformation("");
+        logger.LogInformation("// Transfer operations:");
+        logger.LogInformation("// var transferRequest = new TransferRequest {{ Uri = \"sip:1234@domain.com\" }};");
+        logger.LogInformation("// await service.TransferCallAsync(callId, transferRequest);");
+        logger.LogInformation("// await service.AttendedTransferAsync(sourceCallId, destCallId);
 
     }
     catch (HttpRequestException ex)

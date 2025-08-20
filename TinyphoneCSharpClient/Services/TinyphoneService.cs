@@ -41,12 +41,33 @@ public class TinyphoneService : ITinyphoneService
             using var httpClient = CreateHttpClient();
             var response = await httpClient.GetAsync("/", cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<AppVersionResponse>(content, _jsonOptions);
+                // Log the raw response for debugging
+                Console.WriteLine($"Raw version response: {content}");
+                
+                // Handle simple string responses or JSON objects
+                if (content.StartsWith('"') && content.EndsWith('"'))
+                {
+                    // Simple string response
+                    var message = JsonSerializer.Deserialize<string>(content, _jsonOptions);
+                    return new AppVersionResponse { Message = message ?? "", Version = "Unknown" };
+                }
+                
+                try
+                {
+                    return JsonSerializer.Deserialize<AppVersionResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    // If JSON parsing fails, treat as plain text
+                    return new AppVersionResponse { Message = content, Version = "Unknown" };
+                }
             }
             
+            Console.WriteLine($"Failed version response ({response.StatusCode}): {content}");
             return null;
         }
         catch (Exception ex)
@@ -107,12 +128,32 @@ public class TinyphoneService : ITinyphoneService
             using var httpClient = CreateHttpClient();
             var response = await httpClient.GetAsync("/accounts", cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<List<Account>>(content, _jsonOptions);
+                // Log the raw response for debugging
+                Console.WriteLine($"Raw accounts response: {content}");
+                
+                // Try to handle different response formats
+                if (string.IsNullOrWhiteSpace(content) || content == "null")
+                {
+                    return new List<Account>();
+                }
+                
+                try
+                {
+                    // Try the actual API format first
+                    var accountsResponse = JsonSerializer.Deserialize<AccountsResponse>(content, _jsonOptions);
+                    return accountsResponse?.Accounts ?? new List<Account>();
+                }
+                catch (JsonException)
+                {
+
+                }
             }
             
+            Console.WriteLine($"Failed response ({response.StatusCode}): {content}");
             return null;
         }
         catch (Exception ex)
@@ -126,7 +167,7 @@ public class TinyphoneService : ITinyphoneService
         try
         {
             using var httpClient = CreateHttpClient();
-            var response = await httpClient.GetAsync($"/accounts/{accountName}/logout", cancellationToken);
+            var response = await httpClient.PostAsync($"/accounts/{accountName}/logout", null, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
@@ -173,12 +214,32 @@ public class TinyphoneService : ITinyphoneService
             using var httpClient = CreateHttpClient();
             var response = await httpClient.GetAsync("/calls", cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<List<Call>>(content, _jsonOptions);
+                // Log the raw response for debugging
+                Console.WriteLine($"Raw calls response: {content}");
+                
+                // Try to handle different response formats
+                if (string.IsNullOrWhiteSpace(content) || content == "null")
+                {
+                    return new List<Call>();
+                }
+                
+                try
+                {
+                    // Try the actual API format first (assuming similar to accounts)
+                    var callsResponse = JsonSerializer.Deserialize<CallsResponse>(content, _jsonOptions);
+                    return callsResponse?.Calls ?? new List<Call>();
+                }
+                catch (JsonException)
+                {
+                   
+                }
             }
             
+            Console.WriteLine($"Failed calls response ({response.StatusCode}): {content}");
             return null;
         }
         catch (Exception ex)
@@ -187,7 +248,7 @@ public class TinyphoneService : ITinyphoneService
         }
     }
 
-    public async Task<ApiResponse> AnswerCallAsync(string callId, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse> AnswerCallAsync(int callId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -208,7 +269,7 @@ public class TinyphoneService : ITinyphoneService
         }
     }
 
-    public async Task<ApiResponse> SendDtmfAsync(string callId, string digits, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse> SendDtmfAsync(int callId, string digits, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -229,7 +290,7 @@ public class TinyphoneService : ITinyphoneService
         }
     }
 
-    public async Task<ApiResponse> HoldCallAsync(string callId, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse> HoldCallAsync(int callId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -250,7 +311,7 @@ public class TinyphoneService : ITinyphoneService
         }
     }
 
-    public async Task<ApiResponse> UnholdCallAsync(string callId, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse> UnholdCallAsync(int callId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -271,7 +332,7 @@ public class TinyphoneService : ITinyphoneService
         }
     }
 
-    public async Task<ApiResponse> CreateConferenceAsync(string callId, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse> CreateConferenceAsync(int callId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -292,7 +353,7 @@ public class TinyphoneService : ITinyphoneService
         }
     }
 
-    public async Task<ApiResponse> BreakConferenceAsync(string callId, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse> BreakConferenceAsync(int callId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -313,7 +374,7 @@ public class TinyphoneService : ITinyphoneService
         }
     }
 
-    public async Task<ApiResponse> TransferCallAsync(string callId, TransferRequest transferRequest, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse> TransferCallAsync(int callId, TransferRequest transferRequest, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -337,7 +398,7 @@ public class TinyphoneService : ITinyphoneService
         }
     }
 
-    public async Task<ApiResponse> AttendedTransferAsync(string callId, string destCallId, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse> AttendedTransferAsync(int callId, int destCallId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -358,7 +419,7 @@ public class TinyphoneService : ITinyphoneService
         }
     }
 
-    public async Task<ApiResponse> HangupCallAsync(string callId, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse> HangupCallAsync(int callId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -418,6 +479,101 @@ public class TinyphoneService : ITinyphoneService
         catch (Exception ex)
         {
             return new ApiResponse { Success = false, Message = "Error during exit application", Error = ex.Message };
+        }
+    }
+
+    public async Task<DevicesResponse?> GetDevicesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.GetAsync("/devices", cancellationToken);
+            
+            var content = await response.Content.ReadAsStringAsync();
+            
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Raw devices response: {content}");
+                
+                if (string.IsNullOrWhiteSpace(content) || content == "null")
+                {
+                    return new DevicesResponse { Message = "No devices", Count = 0, Devices = new List<AudioDevice>() };
+                }
+                
+                try
+                {
+                    return JsonSerializer.Deserialize<DevicesResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new DevicesResponse { Message = "Failed to parse devices response", Count = 0, Devices = new List<AudioDevice>() };
+                }
+            }
+            
+            Console.WriteLine($"Failed devices response ({response.StatusCode}): {content}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            throw new HttpRequestException($"Error getting devices list: {ex.Message}", ex);
+        }
+    }
+
+    public async Task<ConfigResponse?> GetConfigAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.GetAsync("/config", cancellationToken);
+            
+            var content = await response.Content.ReadAsStringAsync();
+            
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Raw config response: {content}");
+                
+                if (string.IsNullOrWhiteSpace(content) || content == "null")
+                {
+                    return new ConfigResponse { Version = "Unknown" };
+                }
+                
+                try
+                {
+                    return JsonSerializer.Deserialize<ConfigResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new ConfigResponse { Version = "Failed to parse" };
+                }
+            }
+            
+            Console.WriteLine($"Failed config response ({response.StatusCode}): {content}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            throw new HttpRequestException($"Error getting configuration: {ex.Message}", ex);
+        }
+    }
+
+    public async Task<ApiResponse> ReregisterAccountAsync(string accountName, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var httpClient = CreateHttpClient();
+            var response = await httpClient.PostAsync($"/accounts/{accountName}/reregister", null, cancellationToken);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return new ApiResponse { Success = true, Message = $"Account {accountName} re-registration successful" };
+            }
+            
+            var errorContent = await response.Content.ReadAsStringAsync();
+            return new ApiResponse { Success = false, Message = $"Account {accountName} re-registration failed", Error = errorContent };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse { Success = false, Message = $"Error during account {accountName} re-registration", Error = ex.Message };
         }
     }
 }
