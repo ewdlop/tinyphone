@@ -22,6 +22,7 @@ builder.ConfigureServices((context, services) =>
 
     // Register services
     services.AddScoped<ITinyphoneService, TinyphoneService>();
+    services.AddScoped<ITinyphoneWebSocketService, TinyphoneWebSocketService>();
 });
 
 // Build host

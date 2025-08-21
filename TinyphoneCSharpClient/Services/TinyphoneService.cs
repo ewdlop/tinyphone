@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using TinyphoneCSharpClient.Configuration;
 using TinyphoneCSharpClient.Models;
 
@@ -12,12 +13,15 @@ public class TinyphoneService : ITinyphoneService
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly TinyphoneSettings _settings;
+    private readonly ILogger<TinyphoneWebSocketService> _webSocketLogger;
     private readonly JsonSerializerOptions _jsonOptions;
+    private ITinyphoneWebSocketService? _webSocketService;
 
-    public TinyphoneService(IHttpClientFactory httpClientFactory, TinyphoneSettings settings)
+    public TinyphoneService(IHttpClientFactory httpClientFactory, TinyphoneSettings settings, ILogger<TinyphoneWebSocketService> webSocketLogger)
     {
         _httpClientFactory = httpClientFactory;
         _settings = settings;
+        _webSocketLogger = webSocketLogger;
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -722,5 +726,14 @@ public class TinyphoneService : ITinyphoneService
         {
             throw new HttpRequestException($"Error during account {accountName} re-registration: {ex.Message}", ex);
         }
+    }
+
+    public ITinyphoneWebSocketService GetWebSocketService()
+    {
+        if (_webSocketService == null)
+        {
+            _webSocketService = new TinyphoneWebSocketService(_settings, _webSocketLogger);
+        }
+        return _webSocketService;
     }
 }

@@ -169,4 +169,10 @@ public interface ITinyphoneService
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Re-registration result</returns>
     Task<AccountReregisterResponse?> ReregisterAccountAsync(string accountName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get WebSocket service for real-time events
+    /// </summary>
+    /// <returns>WebSocket service instance</returns>
+    ITinyphoneWebSocketService GetWebSocketService();
 }

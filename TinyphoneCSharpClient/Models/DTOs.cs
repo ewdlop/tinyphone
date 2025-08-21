@@ -473,3 +473,94 @@ public class ApiResponse<T> : ApiResponse
     [JsonPropertyName("data")]
     public T? Data { get; set; }
 }
+
+/// <summary>
+/// WebSocket welcome message - sent on connection
+/// </summary>
+public class WebSocketWelcomeMessage
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("subcription")]
+    public string Subscription { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Base WebSocket event message from the server
+/// </summary>
+public abstract class WebSocketEventMessage
+{
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Account event from WebSocket (registration status changes)
+/// </summary>
+public class AccountEvent : WebSocketEventMessage
+{
+    [JsonPropertyName("account")]
+    public string Account { get; set; } = string.Empty;
+    
+    [JsonPropertyName("presence")]
+    public string Presence { get; set; } = string.Empty;
+    
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
+    
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+    
+    [JsonPropertyName("code")]
+    public int Code { get; set; }
+    
+    [JsonPropertyName("register")]
+    public bool? Register { get; set; }
+    
+    [JsonPropertyName("unregister")]
+    public bool? Unregister { get; set; }
+}
+
+/// <summary>
+/// Call event from WebSocket (call state changes)
+/// </summary>
+public class CallEvent : WebSocketEventMessage
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+    
+    [JsonPropertyName("party")]
+    public string Party { get; set; } = string.Empty;
+    
+    [JsonPropertyName("callerId")]
+    public string CallerId { get; set; } = string.Empty;
+    
+    [JsonPropertyName("displayName")]
+    public string DisplayName { get; set; } = string.Empty;
+    
+    [JsonPropertyName("state")]
+    public string State { get; set; } = string.Empty;
+    
+    [JsonPropertyName("sid")]
+    public string Sid { get; set; } = string.Empty;
+    
+    // For incoming calls
+    [JsonPropertyName("incomming")]  // Note: matches server typo
+    public bool? Incoming { get; set; }
+    
+    [JsonPropertyName("from")]
+    public string? From { get; set; }
+}
+
+/// <summary>
+/// WebSocket connection status
+/// </summary>
+public enum WebSocketConnectionStatus
+{
+    Disconnected,
+    Connecting,
+    Connected,
+    Reconnecting,
+    Failed
+}
