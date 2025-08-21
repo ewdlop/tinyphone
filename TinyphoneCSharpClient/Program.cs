@@ -91,11 +91,11 @@ static async Task DemonstrateApiCalls(ITinyphoneService service, ILogger logger,
 
         // 2. Get accounts list
         logger.LogInformation("\n=== Get Accounts List ===");
-        var accounts = await service.GetAccountsAsync(cancellationToken);
-        if (accounts != null && accounts.Any())
+        var accountsResponse = await service.GetAccountsAsync(cancellationToken);
+        if (accountsResponse?.Accounts != null && accountsResponse.Accounts.Any())
         {
-            logger.LogInformation("Found {Count} accounts:", accounts.Count);
-            foreach (var account in accounts)
+            logger.LogInformation("Found {Count} accounts:", accountsResponse.Accounts.Count);
+            foreach (var account in accountsResponse.Accounts)
             {
                 logger.LogInformation("  - ID: {Id}, Name: {Name}, URI: {Uri}", 
                     account.Id, account.Name, account.Uri);
@@ -110,11 +110,11 @@ static async Task DemonstrateApiCalls(ITinyphoneService service, ILogger logger,
 
         // 3. Get calls list
         logger.LogInformation("\n=== Get Calls List ===");
-        var calls = await service.GetCallsAsync(cancellationToken);
-        if (calls != null && calls.Any())
+        var callsResponse = await service.GetCallsAsync(cancellationToken);
+        if (callsResponse?.Calls != null && callsResponse.Calls.Any())
         {
-            logger.LogInformation("Found {Count} active calls:", calls.Count);
-            foreach (var call in calls)
+            logger.LogInformation("Found {Count} active calls:", callsResponse.Calls.Count);
+            foreach (var call in callsResponse.Calls)
             {
                 logger.LogInformation("  - ID: {Id}, Party: {Party}, State: {State}", 
                     call.Id, call.Party, call.State);
@@ -175,8 +175,15 @@ static async Task DemonstrateApiCalls(ITinyphoneService service, ILogger logger,
         };
 
         var loginResult = await service.LoginAsync(loginRequest, cancellationToken);
-        logger.LogInformation("Login result: Success={Success}, Message={Message}", 
-            loginResult.Success, loginResult.Message);
+        if (loginResult != null)
+        {
+            logger.LogInformation("Login result: Result={Result}, Message={Message}", 
+                loginResult.Result, loginResult.Message);
+        }
+        else
+        {
+            logger.LogWarning("Login request returned null response");
+        }
 
         // 7. Demonstrate dialing (using sample data - will likely fail)
         logger.LogInformation("\n=== Demonstrate Dialing (Sample Data) ===");
@@ -188,8 +195,15 @@ static async Task DemonstrateApiCalls(ITinyphoneService service, ILogger logger,
         };
 
         var dialResult = await service.DialAsync(dialRequest, cancellationToken);
-        logger.LogInformation("Dial result: Success={Success}, Message={Message}", 
-            dialResult.Success, dialResult.Message);
+        if (dialResult != null)
+        {
+            logger.LogInformation("Dial result: Message={Message}, CallId={CallId}", 
+                dialResult.Message, dialResult.CallId);
+        }
+        else
+        {
+            logger.LogWarning("Dial request returned null response");
+        }
     }
     catch (HttpRequestException ex)
     {

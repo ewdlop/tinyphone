@@ -76,7 +76,7 @@ public class TinyphoneService : ITinyphoneService
         }
     }
 
-    public async Task<ApiResponse> LoginAsync(LoginRequest loginRequest, CancellationToken cancellationToken = default)
+    public async Task<LoginResponse?> LoginAsync(LoginRequest loginRequest, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -87,41 +87,66 @@ public class TinyphoneService : ITinyphoneService
             var response = await httpClient.PostAsync("/login", content, cancellationToken);
             var responseContent = await response.Content.ReadAsStringAsync();
             
+            var responseObj = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = "Login successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<LoginResponse>(responseObj, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new LoginResponse { Message = "Login successful", Result = 200 };
+                }
             }
             
-            return new ApiResponse { Success = false, Message = "Login failed", Error = responseContent };
+            try
+            {
+                var errorResponse = JsonSerializer.Deserialize<LoginResponse>(responseObj, _jsonOptions);
+                return errorResponse;
+            }
+            catch (JsonException)
+            {
+                return new LoginResponse { Message = "Login failed", Result = (int)response.StatusCode };
+            }
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = "Error during login", Error = ex.Message };
+            throw new HttpRequestException($"Error during login: {ex.Message}", ex);
         }
     }
 
-    public async Task<ApiResponse> LogoutAsync(CancellationToken cancellationToken = default)
+    public async Task<LogoutResponse?> LogoutAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             using var httpClient = CreateHttpClient();
             var response = await httpClient.PostAsync("/logout", null, cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = "Logout successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<LogoutResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new LogoutResponse { Message = "Logout successful", Result = 200 };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = "Logout failed", Error = errorContent };
+            return new LogoutResponse { Message = "Logout failed", Result = (int)response.StatusCode };
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = "Error during logout", Error = ex.Message };
+            throw new HttpRequestException($"Error during logout: {ex.Message}", ex);
         }
     }
 
-    public async Task<List<Account>?> GetAccountsAsync(CancellationToken cancellationToken = default)
+    public async Task<AccountsResponse?> GetAccountsAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -138,18 +163,16 @@ public class TinyphoneService : ITinyphoneService
                 // Try to handle different response formats
                 if (string.IsNullOrWhiteSpace(content) || content == "null")
                 {
-                    return new List<Account>();
+                    return new AccountsResponse { Message = "No accounts", Accounts = new List<Account>() };
                 }
                 
                 try
                 {
-                    // Try the actual API format first
-                    var accountsResponse = JsonSerializer.Deserialize<AccountsResponse>(content, _jsonOptions);
-                    return accountsResponse?.Accounts ?? new List<Account>();
+                    return JsonSerializer.Deserialize<AccountsResponse>(content, _jsonOptions);
                 }
                 catch (JsonException)
                 {
-
+                    return new AccountsResponse { Message = "Failed to parse accounts", Accounts = new List<Account>() };
                 }
             }
             
@@ -162,28 +185,43 @@ public class TinyphoneService : ITinyphoneService
         }
     }
 
-    public async Task<ApiResponse> LogoutAccountAsync(string accountName, CancellationToken cancellationToken = default)
+    public async Task<AccountLogoutResponse?> LogoutAccountAsync(string accountName, CancellationToken cancellationToken = default)
     {
         try
         {
             using var httpClient = CreateHttpClient();
             var response = await httpClient.PostAsync($"/accounts/{accountName}/logout", null, cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = $"Account {accountName} logout successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<AccountLogoutResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new AccountLogoutResponse { Message = "Logged Out", AccountName = accountName, Result = 200 };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = $"Account {accountName} logout failed", Error = errorContent };
+            try
+            {
+                return JsonSerializer.Deserialize<AccountLogoutResponse>(content, _jsonOptions);
+            }
+            catch (JsonException)
+            {
+                return new AccountLogoutResponse { Message = "Account logout failed", AccountName = accountName, Result = (int)response.StatusCode };
+            }
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = $"Error during account {accountName} logout", Error = ex.Message };
+            throw new HttpRequestException($"Error during account {accountName} logout: {ex.Message}", ex);
         }
     }
 
-    public async Task<ApiResponse> DialAsync(DialRequest dialRequest, CancellationToken cancellationToken = default)
+    public async Task<DialResponse?> DialAsync(DialRequest dialRequest, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -193,21 +231,29 @@ public class TinyphoneService : ITinyphoneService
             
             var response = await httpClient.PostAsync("/dial", content, cancellationToken);
             
+            var reponseString = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = $"Dial {dialRequest.Uri} successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<DialResponse>(reponseString, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new DialResponse { Message = "Dialling", Party = dialRequest.Uri };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = "Dial failed", Error = errorContent };
+            return null;
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = "Error during dial", Error = ex.Message };
+            throw new HttpRequestException($"Error during dial: {ex.Message}", ex);
         }
     }
 
-    public async Task<List<Call>?> GetCallsAsync(CancellationToken cancellationToken = default)
+    public async Task<CallsResponse?> GetCallsAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -224,18 +270,16 @@ public class TinyphoneService : ITinyphoneService
                 // Try to handle different response formats
                 if (string.IsNullOrWhiteSpace(content) || content == "null")
                 {
-                    return new List<Call>();
+                    return new CallsResponse { Message = "No calls", Count = 0, Calls = new List<Call>() };
                 }
                 
                 try
                 {
-                    // Try the actual API format first (assuming similar to accounts)
-                    var callsResponse = JsonSerializer.Deserialize<CallsResponse>(content, _jsonOptions);
-                    return callsResponse?.Calls ?? new List<Call>();
+                    return JsonSerializer.Deserialize<CallsResponse>(content, _jsonOptions);
                 }
                 catch (JsonException)
                 {
-                   
+                    return new CallsResponse { Message = "Failed to parse calls", Count = 0, Calls = new List<Call>() };
                 }
             }
             
@@ -248,133 +292,181 @@ public class TinyphoneService : ITinyphoneService
         }
     }
 
-    public async Task<ApiResponse> AnswerCallAsync(int callId, CancellationToken cancellationToken = default)
+    public async Task<CallAnswerResponse?> AnswerCallAsync(int callId, CancellationToken cancellationToken = default)
     {
         try
         {
             using var httpClient = CreateHttpClient();
             var response = await httpClient.PostAsync($"/calls/{callId}/answer", null, cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = $"Answer call {callId} successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<CallAnswerResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new CallAnswerResponse { Message = "Answer Triggered", CallId = callId };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = "Answer call failed", Error = errorContent };
+            return null;
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = "Error during answer call", Error = ex.Message };
+            throw new HttpRequestException($"Error during answer call: {ex.Message}", ex);
         }
     }
 
-    public async Task<ApiResponse> SendDtmfAsync(int callId, string digits, CancellationToken cancellationToken = default)
+    public async Task<DtmfResponse?> SendDtmfAsync(int callId, string digits, CancellationToken cancellationToken = default)
     {
         try
         {
             using var httpClient = CreateHttpClient();
             var response = await httpClient.PostAsync($"/calls/{callId}/dtmf/{digits}", null, cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = $"Send DTMF {digits} to call {callId} successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<DtmfResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new DtmfResponse { Message = "DTMF Send", CallId = callId, Dtmf = digits };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = "Send DTMF failed", Error = errorContent };
+            return null;
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = "Error during send DTMF", Error = ex.Message };
+            throw new HttpRequestException($"Error during send DTMF: {ex.Message}", ex);
         }
     }
 
-    public async Task<ApiResponse> HoldCallAsync(int callId, CancellationToken cancellationToken = default)
+    public async Task<HoldResponse?> HoldCallAsync(int callId, CancellationToken cancellationToken = default)
     {
         try
         {
             using var httpClient = CreateHttpClient();
             var response = await httpClient.PutAsync($"/calls/{callId}/hold", null, cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = $"Hold call {callId} successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<HoldResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new HoldResponse { Message = "Hold Triggered", CallId = callId, Status = true };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = "Hold call failed", Error = errorContent };
+            return null;
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = "Error during hold call", Error = ex.Message };
+            throw new HttpRequestException($"Error during hold call: {ex.Message}", ex);
         }
     }
 
-    public async Task<ApiResponse> UnholdCallAsync(int callId, CancellationToken cancellationToken = default)
+    public async Task<HoldResponse?> UnholdCallAsync(int callId, CancellationToken cancellationToken = default)
     {
         try
         {
             using var httpClient = CreateHttpClient();
             var response = await httpClient.DeleteAsync($"/calls/{callId}/hold", cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = $"Unhold call {callId} successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<HoldResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new HoldResponse { Message = "UnHold Triggered", CallId = callId, Status = true };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = "Unhold call failed", Error = errorContent };
+            return null;
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = "Error during unhold call", Error = ex.Message };
+            throw new HttpRequestException($"Error during unhold call: {ex.Message}", ex);
         }
     }
 
-    public async Task<ApiResponse> CreateConferenceAsync(int callId, CancellationToken cancellationToken = default)
+    public async Task<ConferenceResponse?> CreateConferenceAsync(int callId, CancellationToken cancellationToken = default)
     {
         try
         {
             using var httpClient = CreateHttpClient();
             var response = await httpClient.PutAsync($"/calls/{callId}/conference", null, cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = $"Create conference with call {callId} successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<ConferenceResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new ConferenceResponse { Message = "Conference Triggered", CallId = callId, Status = true };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = "Create conference failed", Error = errorContent };
+            return null;
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = "Error during create conference", Error = ex.Message };
+            throw new HttpRequestException($"Error during create conference: {ex.Message}", ex);
         }
     }
 
-    public async Task<ApiResponse> BreakConferenceAsync(int callId, CancellationToken cancellationToken = default)
+    public async Task<ConferenceResponse?> BreakConferenceAsync(int callId, CancellationToken cancellationToken = default)
     {
         try
         {
             using var httpClient = CreateHttpClient();
             var response = await httpClient.DeleteAsync($"/calls/{callId}/conference", cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = $"Break call {callId} out of conference successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<ConferenceResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new ConferenceResponse { Message = "BreakConference Triggered", CallId = callId, Status = true };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = "Break conference failed", Error = errorContent };
+            return null;
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = "Error during break conference", Error = ex.Message };
+            throw new HttpRequestException($"Error during break conference: {ex.Message}", ex);
         }
     }
 
-    public async Task<ApiResponse> TransferCallAsync(int callId, TransferRequest transferRequest, CancellationToken cancellationToken = default)
+    public async Task<TransferResponse?> TransferCallAsync(int callId, TransferRequest transferRequest, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -384,101 +476,148 @@ public class TinyphoneService : ITinyphoneService
             
             var response = await httpClient.PostAsync($"/calls/{callId}/transfer", content, cancellationToken);
             
+            var responeString = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = $"Transfer call {callId} to {transferRequest.Uri} successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<TransferResponse>(responeString, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new TransferResponse { Message = "Transfering Call", CallId = callId, Dest = transferRequest.Uri };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = "Transfer call failed", Error = errorContent };
+            return null;
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = "Error during transfer call", Error = ex.Message };
+            throw new HttpRequestException($"Error during transfer call: {ex.Message}", ex);
         }
     }
 
-    public async Task<ApiResponse> AttendedTransferAsync(int callId, int destCallId, CancellationToken cancellationToken = default)
+    public async Task<AttendedTransferResponse?> AttendedTransferAsync(int callId, int destCallId, CancellationToken cancellationToken = default)
     {
         try
         {
             using var httpClient = CreateHttpClient();
             var response = await httpClient.PostAsync($"/calls/{callId}/attended-transfer/{destCallId}", null, cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = $"Attended transfer call {callId} to {destCallId} successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<AttendedTransferResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new AttendedTransferResponse { Message = "Attended transfer Triggered", CallId = callId, DestCallId = destCallId };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = "Attended transfer failed", Error = errorContent };
+            return null;
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = "Error during attended transfer", Error = ex.Message };
+            throw new HttpRequestException($"Error during attended transfer: {ex.Message}", ex);
         }
     }
 
-    public async Task<ApiResponse> HangupCallAsync(int callId, CancellationToken cancellationToken = default)
+    public async Task<HangupResponse?> HangupCallAsync(int callId, CancellationToken cancellationToken = default)
     {
         try
         {
             using var httpClient = CreateHttpClient();
             var response = await httpClient.PostAsync($"/calls/{callId}/hangup", null, cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = $"Hangup call {callId} successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<HangupResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new HangupResponse { Message = "Hangup Triggered", CallId = callId };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = "Hangup call failed", Error = errorContent };
+            return null;
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = "Error during hangup call", Error = ex.Message };
+            throw new HttpRequestException($"Error during hangup call: {ex.Message}", ex);
         }
     }
 
-    public async Task<ApiResponse> HangupAllCallsAsync(CancellationToken cancellationToken = default)
+    public async Task<HangupAllResponse?> HangupAllCallsAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             using var httpClient = CreateHttpClient();
             var response = await httpClient.PostAsync("/hangup_all", null, cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = "Hangup all calls successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<HangupAllResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new HangupAllResponse { Message = "Hangup All Calls Triggered" };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = "Hangup all calls failed", Error = errorContent };
+            return null;
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = "Error during hangup all calls", Error = ex.Message };
+            throw new HttpRequestException($"Error during hangup all calls: {ex.Message}", ex);
         }
     }
 
-    public async Task<ApiResponse> ExitApplicationAsync(CancellationToken cancellationToken = default)
+    public async Task<ExitResponse?> ExitApplicationAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             using var httpClient = CreateHttpClient();
             var response = await httpClient.PostAsync("/exit", null, cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = "Exit application successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<ExitResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new ExitResponse { Message = "Server Shutdown Received", Result = 200 };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = "Exit application failed", Error = errorContent };
+            try
+            {
+                return JsonSerializer.Deserialize<ExitResponse>(content, _jsonOptions);
+            }
+            catch (JsonException)
+            {
+                return new ExitResponse { Message = "Exit application failed", Result = (int)response.StatusCode };
+            }
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = "Error during exit application", Error = ex.Message };
+            throw new HttpRequestException($"Error during exit application: {ex.Message}", ex);
         }
     }
 
@@ -556,24 +695,32 @@ public class TinyphoneService : ITinyphoneService
         }
     }
 
-    public async Task<ApiResponse> ReregisterAccountAsync(string accountName, CancellationToken cancellationToken = default)
+    public async Task<AccountReregisterResponse?> ReregisterAccountAsync(string accountName, CancellationToken cancellationToken = default)
     {
         try
         {
             using var httpClient = CreateHttpClient();
             var response = await httpClient.PostAsync($"/accounts/{accountName}/reregister", null, cancellationToken);
             
+            var content = await response.Content.ReadAsStringAsync();
+            
             if (response.IsSuccessStatusCode)
             {
-                return new ApiResponse { Success = true, Message = $"Account {accountName} re-registration successful" };
+                try
+                {
+                    return JsonSerializer.Deserialize<AccountReregisterResponse>(content, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return new AccountReregisterResponse { Message = "Re-Register Triggered", AccountName = accountName };
+                }
             }
             
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return new ApiResponse { Success = false, Message = $"Account {accountName} re-registration failed", Error = errorContent };
+            return null;
         }
         catch (Exception ex)
         {
-            return new ApiResponse { Success = false, Message = $"Error during account {accountName} re-registration", Error = ex.Message };
+            throw new HttpRequestException($"Error during account {accountName} re-registration: {ex.Message}", ex);
         }
     }
 }

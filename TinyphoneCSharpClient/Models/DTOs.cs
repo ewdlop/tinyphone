@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace TinyphoneCSharpClient.Models;
 
 /// <summary>
-/// Application version information response
+/// Application version information response - GET /
 /// </summary>
 public class AppVersionResponse
 {
@@ -15,88 +15,25 @@ public class AppVersionResponse
 }
 
 /// <summary>
-/// Login request
+/// Config response - GET /config
 /// </summary>
-public class LoginRequest
+public class ConfigResponse
 {
-    [JsonPropertyName("username")]
-    public string Username { get; set; } = string.Empty;
+    [JsonPropertyName("version")]
+    public string Version { get; set; } = string.Empty;
     
-    [JsonPropertyName("login")]
-    public string? Login { get; set; }
+    [JsonPropertyName("config")]
+    public object? Config { get; set; }
     
-    [JsonPropertyName("password")]
-    public string Password { get; set; } = string.Empty;
+    [JsonPropertyName("sip-log-file")]
+    public string? SipLogFile { get; set; }
     
-    [JsonPropertyName("domain")]
-    public string Domain { get; set; } = string.Empty;
-    
-    [JsonPropertyName("proxy")]
-    public string? Proxy { get; set; }
+    [JsonPropertyName("http-log-file")]
+    public string? HttpLogFile { get; set; }
 }
 
 /// <summary>
-/// Login response
-/// </summary>
-public class LoginResponse
-{
-    [JsonPropertyName("message")]
-    public string Message { get; set; } = string.Empty;
-    
-    [JsonPropertyName("account_name")]
-    public string? AccountName { get; set; }
-    
-    [JsonPropertyName("id")]
-    public int? Id { get; set; }
-    
-    [JsonPropertyName("result")]
-    public int Result { get; set; }
-}
-
-/// <summary>
-/// Dial request
-/// </summary>
-public class DialRequest
-{
-    [JsonPropertyName("uri")]
-    public string Uri { get; set; } = string.Empty;
-    
-    [JsonPropertyName("account")]
-    public string? Account { get; set; }
-}
-
-/// <summary>
-/// Dial response
-/// </summary>
-public class DialResponse
-{
-    [JsonPropertyName("message")]
-    public string Message { get; set; } = string.Empty;
-    
-    [JsonPropertyName("call_id")]
-    public int CallId { get; set; }
-    
-    [JsonPropertyName("sid")]
-    public string Sid { get; set; } = string.Empty;
-    
-    [JsonPropertyName("party")]
-    public string Party { get; set; } = string.Empty;
-    
-    [JsonPropertyName("account")]
-    public string Account { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Transfer request
-/// </summary>
-public class TransferRequest
-{
-    [JsonPropertyName("uri")]
-    public string Uri { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Audio device information
+/// Audio device information - from /devices response
 /// </summary>
 public class AudioDevice
 {
@@ -120,7 +57,7 @@ public class AudioDevice
 }
 
 /// <summary>
-/// Devices response
+/// Devices response - GET /devices
 /// </summary>
 public class DevicesResponse
 {
@@ -135,7 +72,49 @@ public class DevicesResponse
 }
 
 /// <summary>
-/// Account information
+/// Login request - POST /login
+/// </summary>
+public class LoginRequest
+{
+    [JsonPropertyName("username")]
+    public string Username { get; set; } = string.Empty;
+    
+    [JsonPropertyName("login")]
+    public string? Login { get; set; }
+    
+    [JsonPropertyName("password")]
+    public string Password { get; set; } = string.Empty;
+    
+    [JsonPropertyName("domain")]
+    public string Domain { get; set; } = string.Empty;
+    
+    [JsonPropertyName("proxy")]
+    public string? Proxy { get; set; }
+}
+
+/// <summary>
+/// Login response - POST /login (various scenarios)
+/// </summary>
+public class LoginResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("account_name")]
+    public string? AccountName { get; set; }
+    
+    [JsonPropertyName("id")]
+    public int? Id { get; set; }
+    
+    [JsonPropertyName("result")]
+    public int Result { get; set; }
+    
+    [JsonPropertyName("reason")]
+    public string? Reason { get; set; }
+}
+
+/// <summary>
+/// Account information - from /accounts response
 /// </summary>
 public class Account
 {
@@ -156,7 +135,82 @@ public class Account
 }
 
 /// <summary>
-/// Call information
+/// Accounts response - GET /accounts
+/// </summary>
+public class AccountsResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("accounts")]
+    public List<Account> Accounts { get; set; } = new();
+}
+
+/// <summary>
+/// Account reregister response - POST /accounts/{name}/reregister
+/// </summary>
+public class AccountReregisterResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("account_name")]
+    public string AccountName { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Account logout response - POST /accounts/{name}/logout
+/// </summary>
+public class AccountLogoutResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("account_name")]
+    public string AccountName { get; set; } = string.Empty;
+    
+    [JsonPropertyName("result")]
+    public int Result { get; set; }
+    
+    [JsonPropertyName("call_count")]
+    public int? CallCount { get; set; }
+}
+
+/// <summary>
+/// Dial request - POST /dial
+/// </summary>
+public class DialRequest
+{
+    [JsonPropertyName("uri")]
+    public string Uri { get; set; } = string.Empty;
+    
+    [JsonPropertyName("account")]
+    public string? Account { get; set; }
+}
+
+/// <summary>
+/// Dial response - POST /dial
+/// </summary>
+public class DialResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("call_id")]
+    public int CallId { get; set; }
+    
+    [JsonPropertyName("sid")]
+    public string Sid { get; set; } = string.Empty;
+    
+    [JsonPropertyName("party")]
+    public string Party { get; set; } = string.Empty;
+    
+    [JsonPropertyName("account")]
+    public string Account { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Call information - from /calls response
 /// </summary>
 public class Call
 {
@@ -192,44 +246,7 @@ public class Call
 }
 
 /// <summary>
-/// Base API response class
-/// </summary>
-public class ApiResponse
-{
-    [JsonPropertyName("success")]
-    public bool Success { get; set; }
-    
-    [JsonPropertyName("message")]
-    public string Message { get; set; } = string.Empty;
-    
-    [JsonPropertyName("error")]
-    public string? Error { get; set; }
-}
-
-/// <summary>
-/// Generic API response
-/// </summary>
-/// <typeparam name="T">Data type</typeparam>
-public class ApiResponse<T> : ApiResponse
-{
-    [JsonPropertyName("data")]
-    public T? Data { get; set; }
-}
-
-/// <summary>
-/// Accounts API response
-/// </summary>
-public class AccountsResponse
-{
-    [JsonPropertyName("accounts")]
-    public List<Account> Accounts { get; set; } = new();
-    
-    [JsonPropertyName("message")]
-    public string Message { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Calls API response
+/// Calls response - GET /calls
 /// </summary>
 public class CallsResponse
 {
@@ -244,9 +261,177 @@ public class CallsResponse
 }
 
 /// <summary>
-/// Generic operation response (for answer, hold, hangup, etc.)
+/// Call answer response - POST /calls/{id}/answer
 /// </summary>
-public class OperationResponse
+public class CallAnswerResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("call_id")]
+    public int CallId { get; set; }
+}
+
+/// <summary>
+/// Attended transfer response - POST /calls/{id}/attended-transfer/{dest_id}
+/// </summary>
+public class AttendedTransferResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("call_id")]
+    public int CallId { get; set; }
+    
+    [JsonPropertyName("dest_call_id")]
+    public int DestCallId { get; set; }
+}
+
+/// <summary>
+/// Hold/Unhold response - PUT/DELETE /calls/{id}/hold
+/// </summary>
+public class HoldResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("call_id")]
+    public int CallId { get; set; }
+    
+    [JsonPropertyName("status")]
+    public bool Status { get; set; }
+}
+
+/// <summary>
+/// Conference response - PUT/DELETE /calls/{id}/conference
+/// </summary>
+public class ConferenceResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("call_id")]
+    public int CallId { get; set; }
+    
+    [JsonPropertyName("status")]
+    public object Status { get; set; } = new(); // Can be bool or string based on server logic
+}
+
+/// <summary>
+/// Transfer request - POST /calls/{id}/transfer
+/// </summary>
+public class TransferRequest
+{
+    [JsonPropertyName("uri")]
+    public string Uri { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Transfer response - POST /calls/{id}/transfer
+/// </summary>
+public class TransferResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("call_id")]
+    public int CallId { get; set; }
+    
+    [JsonPropertyName("sid")]
+    public string Sid { get; set; } = string.Empty;
+    
+    [JsonPropertyName("dest")]
+    public string Dest { get; set; } = string.Empty;
+    
+    [JsonPropertyName("account")]
+    public string Account { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// DTMF response - POST /calls/{id}/dtmf/{digits}
+/// </summary>
+public class DtmfResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("call_id")]
+    public int CallId { get; set; }
+    
+    [JsonPropertyName("dtmf")]
+    public string Dtmf { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Hangup response - POST /calls/{id}/hangup
+/// </summary>
+public class HangupResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("call_id")]
+    public int CallId { get; set; }
+}
+
+/// <summary>
+/// Hangup all response - POST /hangup_all
+/// </summary>
+public class HangupAllResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Logout response - POST /logout
+/// </summary>
+public class LogoutResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("result")]
+    public int Result { get; set; }
+    
+    [JsonPropertyName("accounts")]
+    public List<LogoutAccountInfo> Accounts { get; set; } = new();
+    
+    [JsonPropertyName("failed_count")]
+    public int? FailedCount { get; set; }
+}
+
+/// <summary>
+/// Account info in logout response
+/// </summary>
+public class LogoutAccountInfo
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+    
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Exit response - POST /exit
+/// </summary>
+public class ExitResponse
+{
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("result")]
+    public int Result { get; set; }
+    
+    [JsonPropertyName("source")]
+    public string Source { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Generic error response used across multiple endpoints
+/// </summary>
+public class ErrorResponse
 {
     [JsonPropertyName("message")]
     public string Message { get; set; } = string.Empty;
@@ -257,33 +442,34 @@ public class OperationResponse
     [JsonPropertyName("account_name")]
     public string? AccountName { get; set; }
     
+    [JsonPropertyName("reason")]
+    public string? Reason { get; set; }
+    
     [JsonPropertyName("result")]
     public int? Result { get; set; }
-    
-    [JsonPropertyName("status")]
-    public bool? Status { get; set; }
-    
-    [JsonPropertyName("dest_call_id")]
-    public int? DestCallId { get; set; }
-    
-    [JsonPropertyName("dtmf")]
-    public string? Dtmf { get; set; }
 }
 
 /// <summary>
-/// Config response
+/// Base API response class (for client use)
 /// </summary>
-public class ConfigResponse
+public class ApiResponse
 {
-    [JsonPropertyName("version")]
-    public string Version { get; set; } = string.Empty;
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
     
-    [JsonPropertyName("config")]
-    public object? Config { get; set; }
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
     
-    [JsonPropertyName("sip-log-file")]
-    public string? SipLogFile { get; set; }
-    
-    [JsonPropertyName("http-log-file")]
-    public string? HttpLogFile { get; set; }
+    [JsonPropertyName("error")]
+    public string? Error { get; set; }
+}
+
+/// <summary>
+/// Generic API response with data
+/// </summary>
+/// <typeparam name="T">Data type</typeparam>
+public class ApiResponse<T> : ApiResponse
+{
+    [JsonPropertyName("data")]
+    public T? Data { get; set; }
 }

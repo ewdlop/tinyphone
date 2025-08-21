@@ -20,29 +20,29 @@ public interface ITinyphoneService
     /// <param name="loginRequest">Login request</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Login result</returns>
-    Task<ApiResponse> LoginAsync(LoginRequest loginRequest, CancellationToken cancellationToken = default);
+    Task<LoginResponse?> LoginAsync(LoginRequest loginRequest, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Logout all accounts
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Logout result</returns>
-    Task<ApiResponse> LogoutAsync(CancellationToken cancellationToken = default);
+    Task<LogoutResponse?> LogoutAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get list of registered accounts
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>List of accounts</returns>
-    Task<List<Account>?> GetAccountsAsync(CancellationToken cancellationToken = default);
+    /// <returns>Accounts response</returns>
+    Task<AccountsResponse?> GetAccountsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Logout account with specified name
     /// </summary>
     /// <param name="accountName">Account name</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Logout result</returns>
-    Task<ApiResponse> LogoutAccountAsync(string accountName, CancellationToken cancellationToken = default);
+    /// <returns>Account logout result</returns>
+    Task<AccountLogoutResponse?> LogoutAccountAsync(string accountName, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Dial a call with specified SIP URI
@@ -50,14 +50,14 @@ public interface ITinyphoneService
     /// <param name="dialRequest">Dial request</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Dial result</returns>
-    Task<ApiResponse> DialAsync(DialRequest dialRequest, CancellationToken cancellationToken = default);
+    Task<DialResponse?> DialAsync(DialRequest dialRequest, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get list of active calls
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>List of calls</returns>
-    Task<List<Call>?> GetCallsAsync(CancellationToken cancellationToken = default);
+    /// <returns>Calls response</returns>
+    Task<CallsResponse?> GetCallsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Answer call with specified ID
@@ -65,7 +65,7 @@ public interface ITinyphoneService
     /// <param name="callId">Call ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Answer result</returns>
-    Task<ApiResponse> AnswerCallAsync(int callId, CancellationToken cancellationToken = default);
+    Task<CallAnswerResponse?> AnswerCallAsync(int callId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Send DTMF digits to specified call
@@ -74,7 +74,7 @@ public interface ITinyphoneService
     /// <param name="digits">DTMF digits</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Send result</returns>
-    Task<ApiResponse> SendDtmfAsync(int callId, string digits, CancellationToken cancellationToken = default);
+    Task<DtmfResponse?> SendDtmfAsync(int callId, string digits, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Hold specified call
@@ -82,7 +82,7 @@ public interface ITinyphoneService
     /// <param name="callId">Call ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Hold result</returns>
-    Task<ApiResponse> HoldCallAsync(int callId, CancellationToken cancellationToken = default);
+    Task<HoldResponse?> HoldCallAsync(int callId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Unhold specified call
@@ -90,7 +90,7 @@ public interface ITinyphoneService
     /// <param name="callId">Call ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Unhold result</returns>
-    Task<ApiResponse> UnholdCallAsync(int callId, CancellationToken cancellationToken = default);
+    Task<HoldResponse?> UnholdCallAsync(int callId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Create conference by merging other running calls with specified call
@@ -98,7 +98,7 @@ public interface ITinyphoneService
     /// <param name="callId">Call ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Conference creation result</returns>
-    Task<ApiResponse> CreateConferenceAsync(int callId, CancellationToken cancellationToken = default);
+    Task<ConferenceResponse?> CreateConferenceAsync(int callId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Break specified call out of conference
@@ -106,7 +106,7 @@ public interface ITinyphoneService
     /// <param name="callId">Call ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Break result</returns>
-    Task<ApiResponse> BreakConferenceAsync(int callId, CancellationToken cancellationToken = default);
+    Task<ConferenceResponse?> BreakConferenceAsync(int callId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Transfer call to specified URI
@@ -115,7 +115,7 @@ public interface ITinyphoneService
     /// <param name="transferRequest">Transfer request</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Transfer result</returns>
-    Task<ApiResponse> TransferCallAsync(int callId, TransferRequest transferRequest, CancellationToken cancellationToken = default);
+    Task<TransferResponse?> TransferCallAsync(int callId, TransferRequest transferRequest, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Initiate attended call transfer
@@ -124,7 +124,7 @@ public interface ITinyphoneService
     /// <param name="destCallId">Call ID to be replaced</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Transfer result</returns>
-    Task<ApiResponse> AttendedTransferAsync(int callId, int destCallId, CancellationToken cancellationToken = default);
+    Task<AttendedTransferResponse?> AttendedTransferAsync(int callId, int destCallId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Hangup specified call
@@ -132,21 +132,21 @@ public interface ITinyphoneService
     /// <param name="callId">Call ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Hangup result</returns>
-    Task<ApiResponse> HangupCallAsync(int callId, CancellationToken cancellationToken = default);
+    Task<HangupResponse?> HangupCallAsync(int callId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Hangup all calls
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Hangup result</returns>
-    Task<ApiResponse> HangupAllCallsAsync(CancellationToken cancellationToken = default);
+    Task<HangupAllResponse?> HangupAllCallsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Exit the application
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Exit result</returns>
-    Task<ApiResponse> ExitApplicationAsync(CancellationToken cancellationToken = default);
+    Task<ExitResponse?> ExitApplicationAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get audio devices list
@@ -168,5 +168,5 @@ public interface ITinyphoneService
     /// <param name="accountName">Account name</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Re-registration result</returns>
-    Task<ApiResponse> ReregisterAccountAsync(string accountName, CancellationToken cancellationToken = default);
+    Task<AccountReregisterResponse?> ReregisterAccountAsync(string accountName, CancellationToken cancellationToken = default);
 }
